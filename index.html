@@ -19,8 +19,10 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             position: relative;
+            padding: 20px;
         }
 
         .container {
@@ -32,6 +34,8 @@
             max-width: 500px;
             width: 90%;
             position: relative;
+            z-index: 10;
+            margin-bottom: 350px;
         }
 
         h1 {
@@ -93,16 +97,27 @@
             transform: translateX(-50%);
             width: 300px;
             height: 300px;
+            max-width: 90vw;
+            max-height: 40vh;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             display: none;
+            z-index: 5;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
         }
 
         .gif-bottom img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .gif-bottom img[src=""] {
+            display: none;
         }
 
         .hearts {
@@ -145,6 +160,28 @@
                 padding: 12px 30px;
                 font-size: 1em;
             }
+
+            .container {
+                margin-bottom: 250px;
+                padding: 40px 20px;
+            }
+
+            .gif-bottom {
+                width: 250px;
+                height: 250px;
+                bottom: 10px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .container {
+                margin-bottom: 200px;
+            }
+
+            .gif-bottom {
+                height: 200px;
+                width: 200px;
+            }
         }
     </style>
 </head>
@@ -158,7 +195,7 @@
         </div>
     </div>
     <div class="gif-bottom" id="gifBottom">
-        <img id="gifImage" src="" alt="Cat GIF">
+        <img id="gifImage" src="" alt="Reaction GIF" loading="eager" crossorigin="anonymous">
     </div>
 
     <script>
@@ -186,6 +223,31 @@
         let buttonX = 0;
         let buttonY = 0;
         let isRunning = false;
+
+        // Function to safely set GIF source with error handling
+        function setGifSource(url) {
+            if (!url) return;
+            
+            // Preload the image to check if it loads
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = function() {
+                gifImage.src = url;
+                gifImage.style.display = 'block';
+                gifBottom.style.display = 'block';
+            };
+            
+            img.onerror = function() {
+                console.warn('Failed to load GIF:', url);
+                // Still try to set it, some browsers might work
+                gifImage.src = url;
+                gifImage.style.display = 'block';
+                gifBottom.style.display = 'block';
+            };
+            
+            img.src = url;
+        }
         
         // GIF URLs for different states
         const hoverSadGif = 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzU5eHZiOGE0eGM5ZXhoNTRrZXJlb3VuMnFpb21mYnR3OHYyYjY2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/fFa05KbZowXiEIyRse/giphy.gif';
@@ -325,8 +387,7 @@
         noBtn.addEventListener('mouseenter', function(event) {
             if (!isRunning) {
                 // Show hover sad GIF
-                gifImage.src = hoverSadGif;
-                gifBottom.style.display = 'block';
+                setGifSource(hoverSadGif);
             } else {
                 // After clicked, run away immediately on hover
                 // Keep clickNoGif showing constantly
@@ -346,8 +407,7 @@
         // Handle No button click - enable run-away behavior and show click no GIF
         noBtn.addEventListener('click', function() {
             // Show click no GIF
-            gifImage.src = clickNoGif;
-            gifBottom.style.display = 'block';
+            setGifSource(clickNoGif);
             
             // Initialize button position and start running away
             initializeButtonPosition();
@@ -358,8 +418,7 @@
         yesBtn.addEventListener('mouseenter', function() {
             // Only show hover happy GIF if No button hasn't been clicked
             if (!isRunning) {
-                gifImage.src = hoverHappyGif;
-                gifBottom.style.display = 'block';
+                setGifSource(hoverHappyGif);
             }
             // If No button is running, keep clickNoGif visible
         });
@@ -367,8 +426,7 @@
         yesBtn.addEventListener('mouseleave', function() {
             // If No button is running, show clickNoGif again
             if (isRunning) {
-                gifImage.src = clickNoGif;
-                gifBottom.style.display = 'block';
+                setGifSource(clickNoGif);
             } else {
                 // Hide GIF when mouse leaves Yes button (only if No hasn't been clicked)
                 gifBottom.style.display = 'none';
@@ -378,8 +436,7 @@
         // Handle Yes button click
         function handleYes() {
             // Show the Yes GIF
-            gifImage.src = clickYesGif;
-            gifBottom.style.display = 'block';
+            setGifSource(clickYesGif);
             
             document.querySelector('.container').innerHTML = `
                 <div style="text-align: center;">
