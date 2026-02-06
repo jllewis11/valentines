@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will you be my Valentine?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+
+        h1 {
+            color: #d63384;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .yes-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+        }
+
+        .yes-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .no-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            position: relative;
+            transition: left 0.1s ease-out, top 0.1s ease-out, transform 0.1s ease-out;
+        }
+
+        .no-btn.running {
+            position: fixed;
+        }
+
+        .no-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .gif-bottom {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .gif-bottom img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            color: rgba(214, 51, 132, 0.6);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            button {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hearts" id="hearts"></div>
+        <h1>Will you be my Valentine?</h1>
+        <div class="buttons-container">
+            <button class="yes-btn" onclick="handleYes()">Yes ❤️</button>
+            <button class="no-btn" id="noBtn">No 😢</button>
+        </div>
+    </div>
+    <div class="gif-bottom" id="gifBottom">
+        <img id="gifImage" src="" alt="Cat GIF">
+    </div>
+
+    <script>
+        // Create floating hearts
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.textContent = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDelay = Math.random() * 3 + 's';
+            document.getElementById('hearts').appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 3000);
+        }
+
+        // Create hearts periodically
+        setInterval(createHeart, 300);
+
+        // Initialize button position and run-away functionality
+        const noBtn = document.getElementById('noBtn');
+        const gifBottom = document.getElementById('gifBottom');
+        const gifImage = document.getElementById('gifImage');
+        let buttonX = 0;
+        let buttonY = 0;
+        let isRunning = false;
+        
+        // GIF URLs for different states
+        const hoverSadGif = 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzU5eHZiOGE0eGM5ZXhoNTRrZXJlb3VuMnFpb21mYnR3OHYyYjY2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/fFa05KbZowXiEIyRse/giphy.gif';
+        const hoverHappyGif = 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWxuZWU1c3QwdXA0ZXlhdzJsd3pzdW1rZHRkM2I5dzBtbDRkc28wNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BMR4cgypuglVu/giphy.gif';
+        const clickNoGif = 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDBmbTFvbGF1ZHBzdTNsNHk5MDdmYzdldGl6Mml4dWlybzNhcW4xMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uUvyQdPSl8dhu/giphy.gif';
+        const clickYesGif = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB1b3d0bWNtZ2c2a2JiaW42MzZ5Zmdxb291aXZjbzV0aDN4djducSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/T70hpBP1L0N7U0jtkq/giphy.gif';
+
+        // Set initial button position and enable running
+        function initializeButtonPosition() {
+            if (!isRunning) {
+                // Get the button's current position while it's still relative
+                const noBtnRect = noBtn.getBoundingClientRect();
+                buttonX = noBtnRect.left + noBtnRect.width / 2;
+                buttonY = noBtnRect.top + noBtnRect.height / 2;
+                
+                // Convert to fixed positioning with transform for centering
+                noBtn.classList.add('running');
+                noBtn.style.left = buttonX + 'px';
+                noBtn.style.top = buttonY + 'px';
+                noBtn.style.transform = 'translate(-50%, -50%)';
+                isRunning = true;
+            }
+        }
+
+        // Jump to diagonal corner
+        function jumpToDiagonalCorner() {
+            const buttonWidth = noBtn.offsetWidth || 120;
+            const buttonHeight = noBtn.offsetHeight || 50;
+            
+            // Determine which corner the button is closest to
+            const isNearLeft = buttonX < window.innerWidth / 2;
+            const isNearTop = buttonY < window.innerHeight / 2;
+            
+            // Jump to the opposite diagonal corner
+            if (isNearLeft && isNearTop) {
+                // Currently near top-left, jump to bottom-right
+                buttonX = window.innerWidth - buttonWidth / 2;
+                buttonY = window.innerHeight - buttonHeight / 2;
+            } else if (isNearLeft && !isNearTop) {
+                // Currently near bottom-left, jump to top-right
+                buttonX = window.innerWidth - buttonWidth / 2;
+                buttonY = buttonHeight / 2;
+            } else if (!isNearLeft && isNearTop) {
+                // Currently near top-right, jump to bottom-left
+                buttonX = buttonWidth / 2;
+                buttonY = window.innerHeight - buttonHeight / 2;
+            } else {
+                // Currently near bottom-right, jump to top-left
+                buttonX = buttonWidth / 2;
+                buttonY = buttonHeight / 2;
+            }
+            
+            noBtn.style.left = buttonX + 'px';
+            noBtn.style.top = buttonY + 'px';
+            noBtn.style.transform = 'translate(-50%, -50%)';
+        }
+
+        // Check if button is cornered (at edge and mouse is close)
+        function isCornered(mouseX, mouseY) {
+            const buttonWidth = noBtn.offsetWidth || 120;
+            const buttonHeight = noBtn.offsetHeight || 50;
+            const margin = 20; // Consider cornered if within margin pixels of edge
+            const cornerThreshold = 50; // Distance from mouse to consider cornered
+            
+            const atLeftEdge = buttonX <= buttonWidth / 2 + margin;
+            const atRightEdge = buttonX >= window.innerWidth - buttonWidth / 2 - margin;
+            const atTopEdge = buttonY <= buttonHeight / 2 + margin;
+            const atBottomEdge = buttonY >= window.innerHeight - buttonHeight / 2 - margin;
+            
+            const isAtCorner = (atLeftEdge || atRightEdge) && (atTopEdge || atBottomEdge);
+            
+            if (isAtCorner) {
+                const dx = buttonX - mouseX;
+                const dy = buttonY - mouseY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < cornerThreshold;
+            }
+            
+            return false;
+        }
+
+        // Make the "No" button run away from the mouse
+        function runAway(event, forceRun = false) {
+            if (!isRunning) {
+                return;
+            }
+
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            
+            // Check if button is cornered and jump to diagonal corner
+            if (isCornered(mouseX, mouseY)) {
+                jumpToDiagonalCorner();
+                return;
+            }
+            
+            // Calculate distance between mouse and button center
+            const dx = buttonX - mouseX;
+            const dy = buttonY - mouseY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Only move if mouse is close enough, or if forced (like on hover)
+            if (distance < 150 || forceRun) {
+                // Calculate new position (run away from mouse)
+                const runDistance = forceRun ? 150 : 120; // Run further if forced
+                const angle = Math.atan2(dy, dx);
+                
+                let newX = buttonX + Math.cos(angle) * runDistance;
+                let newY = buttonY + Math.sin(angle) * runDistance;
+                
+                // Keep button within browser window bounds
+                const buttonWidth = noBtn.offsetWidth || 120;
+                const buttonHeight = noBtn.offsetHeight || 50;
+                const maxX = window.innerWidth - buttonWidth / 2;
+                const maxY = window.innerHeight - buttonHeight / 2;
+                
+                newX = Math.max(buttonWidth / 2, Math.min(newX, maxX));
+                newY = Math.max(buttonHeight / 2, Math.min(newY, maxY));
+                
+                // Update button position
+                buttonX = newX;
+                buttonY = newY;
+                noBtn.style.left = buttonX + 'px';
+                noBtn.style.top = buttonY + 'px';
+                noBtn.style.transform = 'translate(-50%, -50%)';
+            }
+        }
+
+        // Track mouse movement continuously when button is running
+        document.addEventListener('mousemove', function(event) {
+            if (isRunning) {
+                runAway(event);
+            }
+        });
+
+        // Handle hover over "No" button
+        noBtn.addEventListener('mouseenter', function(event) {
+            if (!isRunning) {
+                // Show hover sad GIF
+                gifImage.src = hoverSadGif;
+                gifBottom.style.display = 'block';
+            } else {
+                // After clicked, run away immediately on hover
+                // Keep clickNoGif showing constantly
+                runAway(event, true);
+            }
+        });
+
+        // Handle mouse leaving "No" button (before it's clicked)
+        noBtn.addEventListener('mouseleave', function() {
+            if (!isRunning) {
+                // Hide GIF when mouse leaves (only before clicking)
+                gifBottom.style.display = 'none';
+            }
+            // After clicking, keep clickNoGif visible constantly
+        });
+
+        // Handle No button click - enable run-away behavior and show click no GIF
+        noBtn.addEventListener('click', function() {
+            // Show click no GIF
+            gifImage.src = clickNoGif;
+            gifBottom.style.display = 'block';
+            
+            // Initialize button position and start running away
+            initializeButtonPosition();
+        });
+
+        // Handle Yes button hover
+        const yesBtn = document.querySelector('.yes-btn');
+        yesBtn.addEventListener('mouseenter', function() {
+            // Only show hover happy GIF if No button hasn't been clicked
+            if (!isRunning) {
+                gifImage.src = hoverHappyGif;
+                gifBottom.style.display = 'block';
+            }
+            // If No button is running, keep clickNoGif visible
+        });
+
+        yesBtn.addEventListener('mouseleave', function() {
+            // If No button is running, show clickNoGif again
+            if (isRunning) {
+                gifImage.src = clickNoGif;
+                gifBottom.style.display = 'block';
+            } else {
+                // Hide GIF when mouse leaves Yes button (only if No hasn't been clicked)
+                gifBottom.style.display = 'none';
+            }
+        });
+
+        // Handle Yes button click
+        function handleYes() {
+            // Show the Yes GIF
+            gifImage.src = clickYesGif;
+            gifBottom.style.display = 'block';
+            
+            document.querySelector('.container').innerHTML = `
+                <div style="text-align: center;">
+                    <h1 style="color: #d63384; font-size: 3em; margin-bottom: 20px;">Yay!! 🎉❤️</h1>
+                    <p style="font-size: 1.5em; color: #333;">Thanks pookie!!! 💕</p>
+                </div>
+            `;
+        }
+
+    </script>
+</body>
+</html>
